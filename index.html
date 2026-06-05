@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中醫嘉年華｜體質探索站 v1.0</title>
+<style>
+:root{
+  --green:#5fa66b; --deep:#2f6b3d; --cream:#fff8e8; --pink:#ffe8e8; --blue:#e9f5ff;
+  --shadow:0 8px 24px rgba(75,110,80,.16);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; font-family:"Noto Sans TC","Microsoft JhengHei",Arial,sans-serif;
+  background:linear-gradient(180deg,#f5fbef,#fff8e8); color:#2d3a2f;
+}
+.container{max-width:860px;margin:0 auto;padding:18px}
+.card{
+  background:rgba(255,255,255,.92); border:1px solid #e6eadf;
+  border-radius:24px; padding:22px; margin:16px 0; box-shadow:var(--shadow);
+}
+.hero{
+  text-align:center; padding:30px 18px; background:#fff7e3;
+  border-radius:28px; border:2px solid #e9d7aa; position:relative; overflow:hidden;
+}
+.hero h1{font-size:2.1rem;margin:.2em 0;color:var(--deep)}
+.hero .animals{font-size:3rem;letter-spacing:.2rem}
+.badge{display:inline-block;background:#f2c879;color:#5b3d15;padding:8px 14px;border-radius:999px;font-weight:700}
+.progress{height:10px;background:#e5e3d7;border-radius:999px;overflow:hidden;margin:12px 0}
+.bar{height:100%;background:linear-gradient(90deg,#86c36f,#4e9c5d);width:0%;transition:.25s}
+button{
+  border:0;border-radius:14px;padding:13px 18px;font-size:1rem;font-weight:700;cursor:pointer;
+  background:var(--green);color:white;box-shadow:0 4px 10px rgba(80,130,80,.2)
+}
+button.secondary{background:#e9eadf;color:#405040}
+button.danger{background:#e58b8b}
+button:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.choice{
+  flex:1;min-width:135px;text-align:center;border:2px solid #dbe7d6;border-radius:18px;padding:18px;
+  background:#fbfff8;cursor:pointer;font-weight:700;font-size:1.1rem
+}
+.choice.selected{border-color:var(--green);background:#eaf7e8}
+.qtitle{font-size:1.25rem;font-weight:800;line-height:1.6}
+.scale{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px}
+.scale button{background:#fff;color:#344;border:2px solid #d8dfd4;box-shadow:none;padding:12px 4px}
+.scale button.selected{background:#6caf72;color:white;border-color:#6caf72}
+.scale small{display:block;font-size:.72rem;font-weight:500;margin-top:5px;color:#526}
+.center{text-align:center}
+.big{font-size:3.8rem;font-weight:900;color:var(--deep)}
+.result-title{font-size:2rem;color:var(--deep);font-weight:900}
+.note{font-size:.9rem;color:#6c756c;line-height:1.7}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden}
+td,th{padding:10px;border-bottom:1px solid #edf0e8;text-align:left}
+.hidden{display:none}
+.mascot{font-size:4rem}
+.tip{background:#f6fbef;border-left:6px solid var(--green);padding:12px;border-radius:12px;margin:10px 0}
+.footer{text-align:center;color:#778; font-size:.82rem; padding:18px}
+@media(max-width:560px){.container{padding:10px}.card{padding:16px}.hero h1{font-size:1.65rem}.scale{gap:5px}.scale button{font-size:.9rem}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<section id="home" class="hero">
+  <div class="animals">🦥 🐱 🐰 🦝 🐦</div>
+  <h1>中醫嘉年華<br>體質探索站 v1.0</h1>
+  <div class="badge">30秒了解您的中醫體質</div>
+  <p>透過問卷找到您的體質類型，獲得可愛動物夥伴與養生建議。</p>
+  <button onclick="go('gender')">開始體質檢測</button>
+  <p class="note">＊本問卷僅供健康促進與衛教參考，非醫療診斷。</p>
+</section>
+
+<section id="gender" class="card hidden">
+  <h2>🌿 1. 選擇性別</h2>
+  <p>系統會依性別自動調整部分題目。</p>
+  <div class="row">
+    <div class="choice" onclick="selectGender('male',this)">👦<br>男性</div>
+    <div class="choice" onclick="selectGender('female',this)">👧<br>女性</div>
+  </div>
+  <br>
+  <button id="genderNext" disabled onclick="startStage1()">下一步</button>
+</section>
+
+<section id="question" class="card hidden">
+  <div id="stepLabel"></div>
+  <div class="progress"><div id="progressBar" class="bar"></div></div>
+  <div class="qtitle" id="qText"></div>
+  <div class="scale" id="scaleBtns"></div>
+  <div style="margin-top:18px" class="row">
+    <button class="secondary" onclick="prevQ()">上一題</button>
+    <button id="nextBtn" onclick="nextQ()">下一題</button>
+  </div>
+  <div class="tip" id="animalTip"></div>
+</section>
+
+<section id="stage1Result" class="card hidden">
+  <h2>🦥 16題初步評估完成</h2>
+  <p>您的各體質初篩分數如下：</p>
+  <div id="scoreTable"></div>
+  <p id="stage1Conclusion" class="tip"></p>
+  <button onclick="startStage2()">進入第二階段問卷</button>
+</section>
+
+<section id="final" class="card hidden">
+  <div class="center">
+    <div id="finalMascot" class="mascot"></div>
+    <div class="result-title" id="finalTitle"></div>
+    <div class="big" id="finalScore"></div>
+    <h2 id="finalJudge"></h2>
+  </div>
+  <div id="finalDetails"></div>
+  <div class="tip">
+    <b>專屬養生建議</b>
+    <div id="finalAdvice"></div>
+  </div>
+  <div class="row">
+    <button onclick="restart()">重新檢測</button>
+    <button class="secondary" onclick="window.print()">列印/儲存結果</button>
+  </div>
+</section>
+
+<div class="footer">佛教慈濟醫療財團法人三義慈濟醫院｜健康台灣深耕計畫｜展示版 v1.0</div>
+</div>
+
+<script>
+let gender=null, mode="", current=0, answers=[], stage2List=[], stage2Results=[];
+
+const labels=["沒有或根本不","很少或有一點","有時或有些","經常或相當","總是或非常"];
+const types=[
+ {key:"shiRe", name:"實熱體質", animal:"🐯", qs:[0,1], advice:"少吃辛辣燥熱，注意補充水分，作息規律。"},
+ {key:"xuRe", name:"虛熱體質", animal:"🐰", qs:[2,3], advice:"避免熬夜與過度消耗，可選擇溫和放鬆的運動。"},
+ {key:"xuHan", name:"虛寒體質", animal:"🦥", qs:[4,5], advice:"注意保暖，少喝冰飲，規律活動促進循環。"},
+ {key:"tanShiRe", name:"痰濕熱體質", animal:"🦝", qs:[6,7], advice:"飲食清淡，少油炸甜食，增加規律活動。"},
+ {key:"qiXu", name:"氣虛體質", animal:"🦥", qs:[8,9], advice:"避免過勞，保持規律作息，循序漸進增加運動。"},
+ {key:"xueXu", name:"血虛體質", animal:"🐱", qs:[10,11], advice:"重視睡眠與營養均衡，避免長期熬夜。"},
+ {key:"qiYu", name:"氣鬱體質", animal:"🐱", qs:[12,13], advice:"保持心情舒暢，練習呼吸放鬆與戶外散步。"},
+ {key:"xueYu", name:"血瘀體質", animal:"🐦", qs:[14,15], advice:"維持活動量，避免久坐，注意身體疼痛與循環狀態。"}
+];
+
+const stage1=[
+"您怕熱而耐寒嗎？","您容易上火（常有咽喉痛、舌瘡、口腔潰瘍、口、鼻、唇乾熱感或生瘡癤）嗎？",
+"您感到手腳心發熱嗎？","您皮膚或口唇乾嗎？","您手腳發涼嗎？","您感到怕冷、衣服比別人穿得多嗎？",
+"您面部或鼻部有油膩感或者油亮發光嗎？","您大便黏滯不爽、有解不盡的感覺嗎？",
+"您容易疲乏嗎？","您說話聲音低弱無力嗎？","您的面色蒼白或面色黃而無光澤嗎？",
+"您容易頭暈眼花嗎？（特別是下蹲起立時）","您容易精神緊張、焦慮不安嗎？","您無緣無故嘆氣嗎？",
+"您身體上有哪裡疼痛嗎？","您面色晦黯或容易出現褐斑嗎？"
+];
+
+const stage2={
+shiRe:{name:"實熱體質", animal:"🐯", qs:["您怕熱而耐寒嗎？","您喜歡吃寒涼飲食，或耐受寒涼藥物嗎？","您容易上火（常有咽喉痛、舌瘡、口腔潰瘍、口、鼻、唇乾熱感或生瘡癤）嗎？","您舌體偏紅嗎？","您容易口乾，渴喜冷飲嗎？","您的性慾較強嗎？","您形體強壯結實嗎？","您小便色黃嗎？"]},
+xuRe:{name:"虛熱體質", animal:"🐰", qs:["您感到手腳心發熱嗎？","您感覺身體、臉上發熱嗎？","您皮膚或口唇乾嗎？","您口唇的顏色比一般人紅嗎？","您容易便秘或大便乾燥嗎？","您面部兩顴潮紅或偏紅嗎？","您感到眼睛乾澀嗎？","您感到口乾咽燥，總想喝水嗎？"]},
+xuHan:{name:"虛寒體質", animal:"🦥", qs:["您手腳發涼嗎？","您的胃脘部、背部或腰膝部怕冷嗎？","您感到怕冷、衣服比別人穿得多嗎？","您比一般人耐受不了寒冷（冬天的寒冷，夏天的冷氣空調、電扇等）嗎？","您比別人容易患感冒嗎？","您吃喝涼的東西會感到不舒服或怕吃喝涼東西嗎？","您受涼或吃喝涼的東西後，容易腹瀉（拉肚子）嗎？"]},
+tanShiRe:{name:"痰濕熱體質", animal:"🦝", qs:["您面部或鼻部有油膩感或者油亮發光嗎？","您容易生痤瘡或瘡癤嗎？","您感到口苦或嘴裡有異味嗎？","您大便黏滯不爽、有解不盡的感覺嗎？","您小便時尿道有發熱感、尿色濃（深）嗎？",{female:"您帶下色黃（白帶顏色發黃）嗎？限女性答", male:"您的陰囊部位潮濕嗎？限男性答"}]},
+qiXu:{name:"氣虛體質", animal:"🦥", qs:["您容易疲乏嗎？","您容易氣短（呼吸短促，接不上氣）嗎？","您容易心慌嗎？","您容易頭暈或站起時眩暈嗎？","您比別人容易感冒嗎？","您喜歡安靜、懶得說話嗎？","您說話聲音低弱無力嗎？","您活動量稍大就容易出虛汗嗎？"]},
+xueXu:{name:"血虛體質", animal:"🐱", qs:["您的面色蒼白或面色黃而無光澤嗎？","您容易頭暈眼花嗎？（特別是下蹲起立時）",{female:"您的月經顏色淺淡而經量少嗎？限女性答", male:null},"您感覺肢體容易麻木嗎？","您的口唇顏色淡白嗎？","您的指甲顏色淡白嗎？","您的舌體顏色淡白嗎？","您的睡眠品質不好或容易多夢嗎？"]},
+qiYu:{name:"氣鬱體質", animal:"🐱", qs:["您感到悶悶不樂、情緒低沉嗎？","您容易精神緊張、焦慮不安嗎？","您多愁善感、感情脆弱嗎？","您容易感到害怕或受到驚嚇嗎？","您脅肋部或乳房脹痛嗎？","您無緣無故嘆氣嗎？","您咽喉部有異物感，且吐之不出、咽之不下嗎？"]},
+xueYu:{name:"血瘀體質", animal:"🐦", qs:["您的皮膚在不知不覺中會出現青紫瘀斑（皮下出血）嗎？","您兩顴部有細微紅絲嗎？","您身體上有哪裡疼痛嗎？","您面色晦黯或容易出現褐斑嗎？","您容易有黑眼圈嗎？","您容易忘事（健忘）嗎？","您口唇顏色偏黯嗎？"]},
+pingHe:{name:"平和體質", animal:"🐦", reverse:[1,2,3,4,6], qs:["您精力充沛嗎？","您容易疲乏嗎？","您說話聲音低弱無力嗎？","您感到悶悶不樂、情緒低沉嗎？","您比一般人耐受不了寒冷（冬天的寒冷，夏天的冷氣空調、電扇等）嗎？","您能適應外界自然和社會環境的變化嗎？","您容易失眠嗎？"]}
+};
+
+function go(id){document.querySelectorAll("section").forEach(s=>s.classList.add("hidden"));document.getElementById(id).classList.remove("hidden");window.scrollTo(0,0)}
+function selectGender(g,el){gender=g;document.querySelectorAll(".choice").forEach(c=>c.classList.remove("selected"));el.classList.add("selected");document.getElementById("genderNext").disabled=false}
+function startStage1(){mode="stage1";current=0;answers=[];renderQ();go("question")}
+function cleanQs(obj){return obj.qs.map(q=>typeof q==="string"?q:(q[gender]||null)).filter(Boolean)}
+function renderQ(){
+ let qs, title, animal;
+ if(mode==="stage1"){qs=stage1; title="16題初步評估"; animal="🦥 請根據最近一年的體驗與感覺作答。"}
+ else {let obj=stage2[stage2List[0]]; qs=cleanQs(obj); title=obj.name+"問卷"; animal=obj.animal+" 系統已依性別調整題目。"}
+ document.getElementById("stepLabel").innerHTML=`<b>${title}</b>（${current+1}/${qs.length}）`;
+ document.getElementById("progressBar").style.width=((current+1)/qs.length*100)+"%";
+ document.getElementById("qText").innerText=(current+1)+". "+qs[current];
+ document.getElementById("animalTip").innerText=animal;
+ let box=document.getElementById("scaleBtns"); box.innerHTML="";
+ for(let i=1;i<=5;i++){
+  let b=document.createElement("button"); b.innerHTML=i+"<small>"+labels[i-1]+"</small>";
+  if(answers[current]===i)b.classList.add("selected");
+  b.onclick=()=>{answers[current]=i; renderQ();}
+  box.appendChild(b);
+ }
+ document.getElementById("nextBtn").innerText=(current===qs.length-1)?"完成":"下一題";
+}
+function prevQ(){if(current>0){current--;renderQ()}}
+function nextQ(){
+ let qs= mode==="stage1"? stage1 : cleanQs(stage2[stage2List[0]]);
+ if(!answers[current]){alert("請先選擇 1～5 分");return}
+ if(current<qs.length-1){current++;renderQ();return}
+ if(mode==="stage1") finishStage1(); else finishOneStage2();
+}
+function finishStage1(){
+ let scores=types.map(t=>({key:t.key,name:t.name,animal:t.animal,score:t.qs.reduce((a,i)=>a+answers[i],0)}));
+ let max=Math.max(...scores.map(s=>s.score));
+ stage2List=scores.filter(s=>s.score===max).map(s=>s.key);
+ let rows=scores.map(s=>`<tr><td>${s.animal} ${s.name}</td><td>${s.score} 分</td></tr>`).join("");
+ document.getElementById("scoreTable").innerHTML=`<table>${rows}</table>`;
+ document.getElementById("stage1Conclusion").innerHTML=`最高分：${stage2List.map(k=>stage2[k].name).join("、")}。<br>接下來將填寫 ${stage2List.length} 份第二階段問卷。`;
+ go("stage1Result");
+}
+function startStage2(){stage2Results=[];answers=[];current=0;mode="stage2";renderQ();go("question")}
+function finishOneStage2(){
+ let key=stage2List.shift(), obj=stage2[key], qs=cleanQs(obj);
+ let raw=answers.reduce((a,b)=>a+b,0);
+ let score=Math.round(((raw-qs.length)/(qs.length*4))*100);
+ let judge= score>40?"是":(score>=30?"傾向是":"否");
+ stage2Results.push({key,name:obj.name,animal:obj.animal,score,judge,raw,n:qs.length});
+ if(stage2List.length>0){answers=[];current=0;renderQ();return}
+ let valid=stage2Results.filter(r=>r.score>=30);
+ if(valid.length===0){stage2List=["pingHe"];answers=[];current=0;renderQ();return}
+ showFinal(valid.sort((a,b)=>b.score-a.score)[0], stage2Results);
+}
+function showFinal(best, all){
+ let advice = (best.key==="pingHe") ? "維持規律作息、均衡飲食、適度運動，保持愉快心情。" : (types.find(t=>t.key===best.key)?.advice || "建議諮詢專業中醫師。");
+ document.getElementById("finalMascot").innerText=best.animal;
+ document.getElementById("finalTitle").innerText="您的主要體質為："+best.name;
+ document.getElementById("finalScore").innerText=best.score+" 分";
+ document.getElementById("finalJudge").innerText="判定結果："+best.judge;
+ document.getElementById("finalAdvice").innerHTML=`<ul><li>${advice}</li><li>若有身體不適，建議諮詢專業中醫師。</li><li>本活動結果可作為日常養生參考。</li></ul>`;
+ let rows=all.map(r=>`<tr><td>${r.animal} ${r.name}</td><td>${r.score} 分</td><td>${r.judge}</td></tr>`).join("");
+ document.getElementById("finalDetails").innerHTML=`<h3>完整分數</h3><table><tr><th>體質</th><th>分數</th><th>判定</th></tr>${rows}</table><p class="note">計算公式：[(總分－題數)/(題數×4)]×100。</p>`;
+ go("final");
+}
+function restart(){gender=null;stage2Results=[];stage2List=[];answers=[];current=0;document.querySelectorAll(".choice").forEach(c=>c.classList.remove("selected"));document.getElementById("genderNext").disabled=true;go("home")}
+</script>
+</body>
+</html>
